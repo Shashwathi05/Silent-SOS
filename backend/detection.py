@@ -1,6 +1,5 @@
 import cv2
 import mediapipe as mp
-import numpy as np
 
 def process_video(video_path):
 
@@ -14,11 +13,11 @@ def process_video(video_path):
             "distress": None,
             "risk": "NONE",
             "timestamp": None,
-            "camera_id": "CAM_01"
+            "camera_id": "CAM_01",
+            "confidence": 0.0
         }
 
     fps = cap.get(cv2.CAP_PROP_FPS)
-
     collapse_frames = 0
     threshold_frames = 10
     frame_number = 0
@@ -52,14 +51,14 @@ def process_video(video_path):
 
             if collapse_frames > threshold_frames:
                 timestamp = frame_number / fps
-
                 cap.release()
 
                 return {
                     "distress": "collapse",
                     "risk": "HIGH",
                     "timestamp": round(timestamp, 2),
-                    "camera_id": "CAM_01"
+                    "camera_id": "CAM_01",
+                    "confidence": 0.9
                 }
 
     cap.release()
@@ -68,5 +67,6 @@ def process_video(video_path):
         "distress": None,
         "risk": "NONE",
         "timestamp": None,
-        "camera_id": "CAM_01"
+        "camera_id": "CAM_01",
+        "confidence": 0.0
     }

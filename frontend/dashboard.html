@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Security Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #16162a;
+            color: #fff;
+        }
+
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 256px;
+            background-color: #1a1a2e;
+            border-right: 1px solid #2d2d3d;
+            padding: 1.5rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #9333ea, #ec4899);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .logo-text {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(75, 85, 99, 0.3);
+            color: #fff;
+        }
+
+        .nav-item.active {
+            background-color: rgba(147, 51, 234, 0.2);
+            color: #a78bfa;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .header {
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #9ca3af;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background-color: #1e1e2e;
+            border: 1px solid #2d2d3d;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .stat-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-title {
+            font-size: 0.875rem;
+            color: #9ca3af;
+        }
+
+        /* Charts Section */
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-card {
+            background-color: #1e1e2e;
+            border: 1px solid #2d2d3d;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .chart-card.span-2 {
+            grid-column: span 2;
+        }
+
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 220px;
+        }
+
+        /* Alerts Table */
+        .alerts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .alert-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background-color: #252535;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .alert-item:hover {
+            background-color: #2a2a3a;
+        }
+
+        .alert-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .alert-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .alert-type {
+            font-size: 0.875rem;
+        }
+
+        .alert-time {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .alert-severity {
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .severity-high { color: #ef4444; }
+        .severity-medium { color: #eab308; }
+        .severity-low { color: #3b82f6; }
+
+        /* Horizontal Bar Chart */
+        .horizontal-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .bar-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .bar-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+        }
+
+        .bar-label {
+            color: #9ca3af;
+        }
+
+        .bar-value {
+            color: #fff;
+        }
+
+        .bar-track {
+            width: 100%;
+            height: 8px;
+            background-color: #252535;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* Donut Chart Center Text */
+        .donut-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .donut-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .donut-label {
+            font-size: 0.875rem;
+            color: #9ca3af;
+        }
+
+        .donut-legend {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .legend-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+        }
+
+        .legend-left {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .legend-name {
+            color: #9ca3af;
+        }
+
+        .legend-value {
+            color: #fff;
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 200px;
+            }
+            
+            .chart-card.span-2 {
+                grid-column: span 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">🛡️</div>
+                <span class="logo-text">SilentSOS</span>
+            </div>
+            <ul class="nav-menu">
+    <li class="nav-item active" data-page="dashboard">
+        <span class="nav-icon">🏠</span>
+        <span>Dashboard</span>
+    </li>
+
+    <li class="nav-item" data-page="cameras">
+        <span class="nav-icon">📹</span>
+        <span>Cameras</span>
+    </li>
+
+    <li class="nav-item" data-page="alerts">
+        <span class="nav-icon">⚠️</span>
+        <span>Alerts</span>
+    </li>
+
+    <li class="nav-item" data-page="analytics">
+        <span class="nav-icon">📊</span>
+        <span>Analytics</span>
+    </li>
+
+    <li class="nav-item" data-page="system">
+        <span class="nav-icon">🖥️</span>
+        <span>System Status</span>
+    </li>
+
+    <li class="nav-item" data-page="settings">
+        <span class="nav-icon">⚙️</span>
+        <span>Settings</span>
+    </li>
+</ul>
+
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div id="dashboard-section">
+                <div id="cameras-section" style="display:none;">
+    <h1>Cameras</h1>
+    <p>Camera feeds and monitoring will appear here.</p>
+</div>
+
+<div id="alerts-section" style="display:none; padding: 2rem;">
+    <h1 style="margin-bottom: 1.5rem;">Live Alerts</h1>
+
+    <div id="alerts-container" class="alerts-list"></div>
+</div>
+
+
+
+<div id="analytics-section" style="display:none;">
+    <h1>Analytics</h1>
+    <p>Detection trends and statistics will appear here.</p>
+</div>
+
+<div id="system-section" style="display:none;">
+    <h1>System Status</h1>
+    <p>AI model and backend system status will appear here.</p>
+</div>
+
+<div id="settings-section" style="display:none;">
+    <h1>Settings</h1>
+    <p>System configuration options will appear here.</p>
+</div>
+
+            <!-- Header -->
+            <div class="header">
+                <h1>SilentSOS Control Room</h1>
+                <p>AI Public Distress Detection System</p>
+
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg,#9333ea,#ec4899);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M12 2l7 4v6c0 5-3 8-7 10-4-2-7-5-7-10V6l7-4z"/>
+                        </svg>
+                    </div>
+
+                    <div class="stat-value" id="detectionStatus">--</div>
+                    <div class="stat-title">Detection Status</div>
+
+                </div>
+                <div class="stat-card">
+                   <div class="stat-icon" style="background-color:#f97316;">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+    <rect x="2" y="7" width="15" height="10" rx="2"/>
+    <path d="M17 10l5-3v10l-5-3z"/>
+  </svg>
+</div>
+
+                    <div class="stat-value" id="cameraID">--</div>
+<div class="stat-title">Camera ID</div>
+
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #3b82f6;">
+                        
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+    <path d="M10 3h4v18h-4z"/>
+    <path d="M3 10h18v4H3z"/>
+  </svg>
+</div>
+
+                   <div class="stat-value" id="riskLevel">--</div>
+<div class="stat-title">Risk Level</div>
+
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #ec4899;">⚠️</div>
+                    <div class="stat-value">252</div>
+                    <div class="stat-title">Stat Four</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #a855f7;">🔒</div>
+                    <div class="stat-value">123</div>
+                    <div class="stat-title">Stat Five</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #06b6d4;">👥</div>
+                    <div class="stat-value">85</div>
+                    <div class="stat-title">Stat Six</div>
+                </div>
+            </div>
+
+            <!-- Charts Row 1 -->
+            <div class="charts-row">
+                <div class="chart-card span-2">
+                    <h3 class="chart-title">Chart One</h3>
+                    <div class="chart-container">
+                        <canvas id="lineChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3 class="chart-title">Chart Two</h3>
+                    <div class="chart-container">
+                        <canvas id="donutChart"></canvas>
+                        <div class="donut-center">
+                            <div class="donut-value">3245</div>
+                            <div class="donut-label">Total</div>
+                        </div>
+                    </div>
+                    <div class="donut-legend">
+                        <div class="legend-item">
+                            <div class="legend-left">
+                                <div class="legend-color" style="background-color: #ec4899;"></div>
+                                <span class="legend-name">Critical</span>
+                            </div>
+                            <span class="legend-value">856</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-left">
+                                <div class="legend-color" style="background-color: #8b5cf6;"></div>
+                                <span class="legend-name">High</span>
+                            </div>
+                            <span class="legend-value">1245</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-left">
+                                <div class="legend-color" style="background-color: #06b6d4;"></div>
+                                <span class="legend-name">Medium</span>
+                            </div>
+                            <span class="legend-value">732</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-left">
+                                <div class="legend-color" style="background-color: #10b981;"></div>
+                                <span class="legend-name">Low</span>
+                            </div>
+                            <span class="legend-value">412</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row 2 -->
+            <div class="charts-row">
+                <div class="chart-card">
+                    <h3 class="chart-title">Chart Three</h3>
+                    <div class="chart-container">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3 class="chart-title">List One</h3>
+                    <div class="alerts-list" id="alertsContainer"></div>
+
+                </div>
+                <div class="chart-card">
+                    <h3 class="chart-title">Chart Four</h3>
+                    <div class="horizontal-bars">
+                        <div class="bar-item">
+                            <div class="bar-header">
+                                <span class="bar-label">Firewall Protection</span>
+                                <span class="bar-value">95%</span>
+                            </div>
+                            <div class="bar-track">
+                                <div class="bar-fill" style="width: 95%; background-color: #8b5cf6;"></div>
+                            </div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-header">
+                                <span class="bar-label">Antivirus Status</span>
+                                <span class="bar-value">88%</span>
+                            </div>
+                            <div class="bar-track">
+                                <div class="bar-fill" style="width: 88%; background-color: #ec4899;"></div>
+                            </div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-header">
+                                <span class="bar-label">Data Encryption</span>
+                                <span class="bar-value">92%</span>
+                            </div>
+                            <div class="bar-track">
+                                <div class="bar-fill" style="width: 92%; background-color: #06b6d4;"></div>
+                            </div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-header">
+                                <span class="bar-label">Access Control</span>
+                                <span class="bar-value">85%</span>
+                            </div>
+                            <div class="bar-track">
+                                <div class="bar-fill" style="width: 85%; background-color: #10b981;"></div>
+                            </div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-header">
+                                <span class="bar-label">Patch Management</span>
+                                <span class="bar-value">78%</span>
+                            </div>
+                            <div class="bar-track">
+                                <div class="bar-fill" style="width: 78%; background-color: #f59e0b;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+
+/* ================= BACKEND INTEGRATION ================= */
+
+// Fetch alerts from backend
+function loadAlerts() {
+    fetch("/alerts")
+        .then(res => res.json())
+        .then(data => {
+
+            const alertsContainer = document.getElementById("alerts-container");
+            alertsContainer.innerHTML = "";
+
+            const detectionStatus = document.getElementById("detectionStatus");
+            const cameraID = document.getElementById("cameraID");
+            const riskLevel = document.getElementById("riskLevel");
+
+            if (data.length === 0) {
+                detectionStatus.innerText = "SAFE";
+                detectionStatus.style.color = "#10b981";
+                cameraID.innerText = "CAM_01";
+                riskLevel.innerText = "LOW";
+                riskLevel.style.color = "#3b82f6";
+                return;
+            }
+
+            const latest = data[data.length - 1];
+
+            detectionStatus.innerText = "DETECTED";
+            detectionStatus.style.color = "#ef4444";
+            cameraID.innerText = latest.camera_id;
+            riskLevel.innerText = latest.risk;
+            riskLevel.style.color = "#ef4444";
+
+            data.reverse().forEach(alert => {
+                alertsContainer.innerHTML += `
+                    <div class="alert-item">
+                        <div class="alert-left">
+                            <span class="alert-icon">⚠️</span>
+                            <div class="alert-info">
+                                <div class="alert-type">${alert.distress}</div>
+                                <div class="alert-time">${alert.timestamp}s</div>
+                            </div>
+                        </div>
+                        <span class="alert-severity severity-${alert.risk.toLowerCase()}">
+                            ${alert.risk}
+                        </span>
+                    </div>
+                `;
+            });
+        });
+}
+
+
+// Upload video to backend
+function uploadVideo(file) {
+    const formData = new FormData();
+    formData.append("video", file);
+
+    fetch("/upload", {
+        method: "POST",
+        body: formData
+    })
+    .then(() => loadAlerts());
+}
+
+
+// Auto-refresh alerts every 3 seconds
+setInterval(loadAlerts, 3000);
+loadAlerts();
+
+        // Navigation functionality
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+    item.addEventListener('click', function() {
+
+        navItems.forEach(nav => nav.classList.remove('active'));
+        this.classList.add('active');
+
+        const page = this.getAttribute('data-page');
+
+        // Hide all sections
+        document.getElementById('dashboard-section').style.display = 'none';
+        document.getElementById('cameras-section').style.display = 'none';
+        document.getElementById('alerts-section').style.display = 'none';
+        document.getElementById('analytics-section').style.display = 'none';
+        document.getElementById('system-section').style.display = 'none';
+        document.getElementById('settings-section').style.display = 'none';
+
+        // Show selected section
+        document.getElementById(page + '-section').style.display = 'block';
+    });
+});
+
+// ===== SilentSOS Detection Integration =====
+
+const detectionStatus = document.getElementById("detectionStatus");
+const cameraID = document.getElementById("cameraID");
+const riskLevel = document.getElementById("riskLevel");
+const alertsContainer = document.getElementById("alertsContainer");
+
+
+        // Chart.js configurations
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        color: '#9ca3af',
+                        font: { size: 12 }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    grid: { color: '#333' },
+                    ticks: { color: '#666' }
+                },
+                x: {
+                    grid: { color: '#333' },
+                    ticks: { color: '#666' }
+                }
+            }
+        };
+
+        // Line Chart
+        const lineCtx = document.getElementById('lineChart').getContext('2d');
+        new Chart(lineCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [
+                    {
+                        label: 'Threats',
+                        data: [30, 45, 35, 50, 40, 55],
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Attacks',
+                        data: [40, 35, 50, 45, 55, 50],
+                        borderColor: '#ec4899',
+                        backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Scans',
+                        data: [20, 30, 35, 40, 50, 45],
+                        borderColor: '#06b6d4',
+                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Alerts',
+                        data: [35, 40, 30, 45, 40, 50],
+                        borderColor: '#f97316',
+                        backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: chartOptions
+        });
+
+        // Donut Chart
+        const donutCtx = document.getElementById('donutChart').getContext('2d');
+        new Chart(donutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Critical', 'High', 'Medium', 'Low'],
+                datasets: [{
+                    data: [856, 1245, 732, 412],
+                    backgroundColor: ['#ec4899', '#8b5cf6', '#06b6d4', '#10b981'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        // Bar Chart
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [
+                    {
+                        label: 'High',
+                        data: [45, 55, 40, 50],
+                        backgroundColor: '#ec4899'
+                    },
+                    {
+                        label: 'Medium',
+                        data: [30, 35, 40, 45],
+                        backgroundColor: '#8b5cf6'
+                    },
+                    {
+                        label: 'Low',
+                        data: [25, 20, 30, 25],
+                        backgroundColor: '#06b6d4'
+                    }
+                ]
+            },
+            options: {
+                ...chartOptions,
+                scales: {
+                    ...chartOptions.scales,
+                    x: {
+                        ...chartOptions.scales.x,
+                        stacked: false
+                    },
+                    y: {
+                        ...chartOptions.scales.y,
+                        stacked: false
+                    }
+                }
+            }
+        });
+        
+
+    </script>
+    
+</body>
+</html>
