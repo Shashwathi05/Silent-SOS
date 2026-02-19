@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cyber Security Dashboard</title>
+    <title>SilentSOS - Cyber Security Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
@@ -14,46 +14,112 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: #16162a;
+            background-color: #000000;
             color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-gradient-1 {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(147, 51, 234, 0.15), transparent);
+            border-radius: 50%;
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        .bg-gradient-2 {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.15), transparent);
+            border-radius: 50%;
+            animation: pulse 4s ease-in-out infinite 2s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
         }
 
         .dashboard {
             display: flex;
             min-height: 100vh;
+            position: relative;
+            z-index: 1;
         }
 
-        /* Sidebar Styles */
+        /* 3D Sidebar */
         .sidebar {
             width: 256px;
-            background-color: #1a1a2e;
-            border-right: 1px solid #2d2d3d;
+            background-color: #000000;
+            border-right: 1px solid #1f1f1f;
             padding: 1.5rem;
+            position: relative;
+            box-shadow: 4px 0 20px rgba(147, 51, 234, 0.1);
         }
 
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.05), transparent, rgba(236, 72, 153, 0.05));
+            pointer-events: none;
+        }
+
+        /* 3D Logo */
         .logo {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
             margin-bottom: 2rem;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
         }
 
         .logo-icon {
-            width: 40px;
-            height: 40px;
+            width: 48px;
+            height: 48px;
             background: linear-gradient(135deg, #9333ea, #ec4899);
-            border-radius: 8px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.25rem;
+            font-size: 1.5rem;
+            box-shadow: 0 8px 16px rgba(147, 51, 234, 0.5), 0 4px 8px rgba(236, 72, 153, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .logo:hover .logo-icon {
+            transform: rotate(6deg);
         }
 
         .logo-text {
-            font-size: 1.125rem;
-            font-weight: 600;
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a78bfa, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
+        /* 3D Navigation */
         .nav-menu {
             list-style: none;
         }
@@ -62,27 +128,55 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            padding: 0.75rem 1rem;
+            padding: 0.875rem 1rem;
             margin-bottom: 0.5rem;
-            border-radius: 8px;
+            border-radius: 12px;
             color: #9ca3af;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
+            position: relative;
+            font-weight: 500;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 12px;
+            opacity: 0;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.2), rgba(236, 72, 153, 0.2));
+            transition: opacity 0.3s ease;
         }
 
         .nav-item:hover {
-            background-color: rgba(75, 85, 99, 0.3);
             color: #fff;
+            transform: translateX(4px);
+        }
+
+        .nav-item:hover::before {
+            opacity: 0.5;
         }
 
         .nav-item.active {
-            background-color: rgba(147, 51, 234, 0.2);
             color: #a78bfa;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.3), rgba(236, 72, 153, 0.3));
+            box-shadow: 0 8px 16px rgba(147, 51, 234, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transform: translateX(4px);
+        }
+
+        .nav-item.active::before {
+            opacity: 1;
         }
 
         .nav-icon {
-            width: 20px;
-            height: 20px;
+            font-size: 1.25rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-label {
+            position: relative;
+            z-index: 1;
         }
 
         /* Main Content */
@@ -90,6 +184,7 @@
             flex: 1;
             overflow-y: auto;
             padding: 2rem;
+            position: relative;
         }
 
         .header {
@@ -97,110 +192,254 @@
         }
 
         .header h1 {
-            font-size: 2rem;
+            font-size: 2.5rem;
+            font-weight: 800;
             margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #a78bfa, #ec4899, #a78bfa);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-flow 3s ease infinite;
+        }
+
+        @keyframes gradient-flow {
+            0%, 100% { background-position: 0% center; }
+            50% { background-position: 100% center; }
         }
 
         .header p {
             color: #9ca3af;
+            font-size: 1.125rem;
         }
 
-        /* Stats Grid */
+        /* 3D Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
             margin-bottom: 2rem;
         }
 
         .stat-card {
-            background-color: #1e1e2e;
+            background: linear-gradient(135deg, rgba(30, 30, 46, 0.5), rgba(20, 20, 36, 0.5));
+            backdrop-filter: blur(10px);
             border: 1px solid #2d2d3d;
-            border-radius: 12px;
-            padding: 1.5rem;
+            border-radius: 20px;
+            padding: 2rem;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.3), rgba(236, 72, 153, 0.3));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(147, 51, 234, 0.3);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
         }
 
         .stat-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 1rem;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover .stat-icon {
+            transform: rotate(6deg) scale(1.1);
         }
 
         .stat-value {
-            font-size: 1.75rem;
-            font-weight: 700;
-            margin-bottom: 0.25rem;
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
         }
 
         .stat-title {
             font-size: 0.875rem;
             color: #9ca3af;
+            font-weight: 500;
         }
 
-        /* Charts Section */
-        .charts-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
+        /* 3D Chart Cards */
         .chart-card {
-            background-color: #1e1e2e;
+            background: linear-gradient(135deg, rgba(30, 30, 46, 0.5), rgba(20, 20, 36, 0.5));
+            backdrop-filter: blur(10px);
             border: 1px solid #2d2d3d;
-            border-radius: 12px;
-            padding: 1.5rem;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
-        .chart-card.span-2 {
-            grid-column: span 2;
+        .chart-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.3), rgba(236, 72, 153, 0.3));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .chart-card:hover {
+            border-color: rgba(147, 51, 234, 0.5);
+            box-shadow: 0 20px 40px rgba(147, 51, 234, 0.2);
+        }
+
+        .chart-card:hover::before {
+            opacity: 1;
         }
 
         .chart-title {
-            font-size: 1.125rem;
-            font-weight: 600;
+            font-size: 1.25rem;
+            font-weight: 700;
             margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #a78bfa, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .chart-container {
             position: relative;
-            height: 220px;
+            height: 280px;
         }
 
-        /* Alerts Table */
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* 3D Upload Section */
+        .upload-section {
+            background: linear-gradient(135deg, rgba(30, 30, 46, 0.5), rgba(20, 20, 36, 0.5));
+            backdrop-filter: blur(10px);
+            border: 1px solid #2d2d3d;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .upload-section:hover {
+            transform: scale(1.01);
+            box-shadow: 0 20px 40px rgba(147, 51, 234, 0.2);
+        }
+
+        .upload-btn {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #9333ea, #ec4899);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(147, 51, 234, 0.5);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 12px 24px rgba(147, 51, 234, 0.6);
+        }
+
+        .upload-btn:active {
+            transform: translateY(0) scale(1);
+        }
+
+        input[type="file"] {
+            margin-bottom: 1rem;
+            color: white;
+            padding: 0.75rem;
+            border: 2px dashed #2d2d3d;
+            border-radius: 12px;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        input[type="file"]:hover {
+            border-color: #9333ea;
+            background: rgba(147, 51, 234, 0.05);
+        }
+
+        /* 3D Alerts */
         .alerts-list {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 1rem;
         }
 
         .alert-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0.75rem;
-            background-color: #252535;
-            border-radius: 8px;
-            transition: background-color 0.2s;
+            padding: 1.25rem;
+            background: linear-gradient(135deg, rgba(30, 30, 46, 0.5), rgba(20, 20, 36, 0.5));
+            backdrop-filter: blur(10px);
+            border: 1px solid #2d2d3d;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
         .alert-item:hover {
-            background-color: #2a2a3a;
+            transform: translateX(8px) scale(1.02);
+            border-color: rgba(147, 51, 234, 0.5);
+            box-shadow: 0 8px 24px rgba(147, 51, 234, 0.3);
         }
 
         .alert-left {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 1rem;
         }
 
-        .alert-icon {
-            width: 20px;
-            height: 20px;
+        .alert-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ef4444, #f97316);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
+            font-size: 1.5rem;
         }
 
         .alert-info {
@@ -210,29 +449,48 @@
         }
 
         .alert-type {
-            font-size: 0.875rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
         }
 
         .alert-time {
-            font-size: 0.75rem;
+            font-size: 0.875rem;
             color: #9ca3af;
         }
 
         .alert-severity {
             font-size: 0.75rem;
-            font-weight: 500;
+            font-weight: 700;
             text-transform: uppercase;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            letter-spacing: 0.05em;
         }
 
-        .severity-high { color: #ef4444; }
-        .severity-medium { color: #eab308; }
-        .severity-low { color: #3b82f6; }
+        .severity-high {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.5);
+        }
 
-        /* Horizontal Bar Chart */
+        .severity-medium {
+            background: rgba(234, 179, 8, 0.2);
+            color: #eab308;
+            border: 1px solid rgba(234, 179, 8, 0.5);
+        }
+
+        .severity-low {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.5);
+        }
+
+        /* Horizontal Bars with 3D effect */
         .horizontal-bars {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.5rem;
         }
 
         .bar-item {
@@ -249,105 +507,88 @@
 
         .bar-label {
             color: #9ca3af;
+            font-weight: 500;
         }
 
         .bar-value {
             color: #fff;
+            font-weight: 700;
         }
 
         .bar-track {
             width: 100%;
-            height: 8px;
-            background-color: #252535;
-            border-radius: 4px;
+            height: 10px;
+            background-color: #1a1a1a;
+            border-radius: 50px;
             overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         .bar-fill {
             height: 100%;
-            border-radius: 4px;
-            transition: width 0.5s ease;
+            border-radius: 50px;
+            transition: width 1s ease-out;
+            position: relative;
         }
 
-        /* Donut Chart Center Text */
-        .donut-center {
+        .bar-fill::after {
+            content: '';
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            pointer-events: none;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
         }
 
-        .donut-value {
-            font-size: 2rem;
-            font-weight: 700;
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
 
-        .donut-label {
-            font-size: 0.875rem;
-            color: #9ca3af;
+        /* Page Sections */
+        .page-section {
+            display: none;
         }
 
-        .donut-legend {
-            margin-top: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+        .page-section.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
         }
 
-        .legend-item {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.875rem;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .legend-left {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+        /* Status colors */
+        .status-safe { color: #10b981; }
+        .status-detected { color: #ef4444; }
+        .risk-low { color: #3b82f6; }
+        .risk-high { color: #ef4444; }
 
-        .legend-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-
-        .legend-name {
-            color: #9ca3af;
-        }
-
-        .legend-value {
-            color: #fff;
-        }
-
-        @media (max-width: 1024px) {
-            .sidebar {
-                width: 200px;
-            }
-            
-            .chart-card.span-2 {
-                grid-column: span 1;
-            }
-        }
-
+        /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
                 display: none;
             }
-            
             .main-content {
                 padding: 1rem;
             }
-            
             .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: 1fr;
+            }
+            .charts-row {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Background Animation -->
+    <div class="bg-animation">
+        <div class="bg-gradient-1"></div>
+        <div class="bg-gradient-2"></div>
+    </div>
+
     <div class="dashboard">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -356,354 +597,325 @@
                 <span class="logo-text">SilentSOS</span>
             </div>
             <ul class="nav-menu">
-    <li class="nav-item active" data-page="dashboard">
-        <span class="nav-icon">🏠</span>
-        <span>Dashboard</span>
-    </li>
-
-    <li class="nav-item" data-page="cameras">
-        <span class="nav-icon">📹</span>
-        <span>Cameras</span>
-    </li>
-
-    <li class="nav-item" data-page="alerts">
-        <span class="nav-icon">⚠️</span>
-        <span>Alerts</span>
-    </li>
-
-    <li class="nav-item" data-page="analytics">
-        <span class="nav-icon">📊</span>
-        <span>Analytics</span>
-    </li>
-
-    <li class="nav-item" data-page="system">
-        <span class="nav-icon">🖥️</span>
-        <span>System Status</span>
-    </li>
-
-    <li class="nav-item" data-page="settings">
-        <span class="nav-icon">⚙️</span>
-        <span>Settings</span>
-    </li>
-</ul>
-
+                <li class="nav-item active" data-page="dashboard">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-label">Dashboard</span>
+                </li>
+                <li class="nav-item" data-page="cameras">
+                    <span class="nav-icon">📹</span>
+                    <span class="nav-label">Cameras</span>
+                </li>
+                <li class="nav-item" data-page="alerts">
+                    <span class="nav-icon">⚠️</span>
+                    <span class="nav-label">Alerts</span>
+                </li>
+                <li class="nav-item" data-page="analytics">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">Analytics</span>
+                </li>
+                <li class="nav-item" data-page="system">
+                    <span class="nav-icon">🖥️</span>
+                    <span class="nav-label">System Status</span>
+                </li>
+                <li class="nav-item" data-page="settings">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-label">Settings</span>
+                </li>
+            </ul>
         </aside>
 
         <!-- Main Content -->
         <main class="main-content">
-            <div id="dashboard-section">
-                <div id="cameras-section" style="display:none;">
-    <h1>Cameras</h1>
-    <p>Camera feeds and monitoring will appear here.</p>
-</div>
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="page-section active">
+                <div class="header">
+                    <h1>SilentSOS Control Room</h1>
+                    <p>AI Public Distress Detection System</p>
+                </div>
 
-<div id="alerts-section" style="display:none; padding: 2rem;">
-    <h1 style="margin-bottom: 1.5rem;">Live Alerts</h1>
-
-    <div id="alerts-container" class="alerts-list"></div>
-</div>
-
-
-
-<div id="analytics-section" style="display:none;">
-    <h1>Analytics</h1>
-    <p>Detection trends and statistics will appear here.</p>
-</div>
-
-<div id="system-section" style="display:none;">
-    <h1>System Status</h1>
-    <p>AI model and backend system status will appear here.</p>
-</div>
-
-<div id="settings-section" style="display:none;">
-    <h1>Settings</h1>
-    <p>System configuration options will appear here.</p>
-</div>
-
-            <!-- Header -->
-            <div class="header">
-                <h1>SilentSOS Control Room</h1>
-                <p>AI Public Distress Detection System</p>
-
-            </div>
-
-            <!-- Stats Grid -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg,#9333ea,#ec4899);">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                            <path d="M12 2l7 4v6c0 5-3 8-7 10-4-2-7-5-7-10V6l7-4z"/>
-                        </svg>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #9333ea, #ec4899);">
+                            🛡️
+                        </div>
+                        <div class="stat-value" id="detectionStatus">--</div>
+                        <div class="stat-title">Detection Status</div>
                     </div>
 
-                    <div class="stat-value" id="detectionStatus">--</div>
-                    <div class="stat-title">Detection Status</div>
-
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #06b6d4);">
+                            ⚠️
+                        </div>
+                        <div class="stat-value" id="riskLevel">--</div>
+                        <div class="stat-title">Risk Level</div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                   <div class="stat-icon" style="background-color:#f97316;">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-    <rect x="2" y="7" width="15" height="10" rx="2"/>
-    <path d="M17 10l5-3v10l-5-3z"/>
-  </svg>
-</div>
 
+                <div class="upload-section">
+                    <h3 class="chart-title">Upload Footage</h3>
+                    <input type="file" id="videoInput" accept="video/*">
+                    <button class="upload-btn" onclick="analyze()">
+                        <span>📤</span>
+                        Analyze Footage
+                    </button>
+                    <p id="status" style="margin-top: 1rem; color: #9ca3af;"></p>
+                </div>
+            </div>
+
+            <!-- Cameras Section -->
+            <div id="cameras-section" class="page-section">
+                <div class="header">
+                    <h1>Cameras</h1>
+                    <p>Camera feeds and monitoring will appear here.</p>
+                </div>
+            </div>
+
+            <!-- Alerts Section -->
+            <div id="alerts-section" class="page-section">
+                <div class="header">
+                    <h1>Live Alerts</h1>
+                </div>
+                <div id="alerts-container" class="alerts-list"></div>
+            </div>
+
+            <!-- Analytics Section -->
+            <div id="analytics-section" class="page-section">
+                <div class="header">
+                    <h1>Analytics</h1>
+                    <p>Detection trends and statistics</p>
+                </div>
+
+                <div class="stat-card" style="margin-bottom: 2rem;">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f97316, #ef4444);">
+                        📹
+                    </div>
                     <div class="stat-value" id="cameraID">--</div>
-<div class="stat-title">Camera ID</div>
+                    <div class="stat-title">Camera ID</div>
+                </div>
 
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background-color: #3b82f6;">
-                        
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-    <path d="M10 3h4v18h-4z"/>
-    <path d="M3 10h18v4H3z"/>
-  </svg>
-</div>
-
-                   <div class="stat-value" id="riskLevel">--</div>
-<div class="stat-title">Risk Level</div>
-
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background-color: #ec4899;">⚠️</div>
-                    <div class="stat-value">252</div>
-                    <div class="stat-title">Stat Four</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background-color: #a855f7;">🔒</div>
-                    <div class="stat-value">123</div>
-                    <div class="stat-title">Stat Five</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background-color: #06b6d4;">👥</div>
-                    <div class="stat-value">85</div>
-                    <div class="stat-title">Stat Six</div>
-                </div>
-            </div>
-
-            <!-- Charts Row 1 -->
-            <div class="charts-row">
-                <div class="chart-card span-2">
-                    <h3 class="chart-title">Chart One</h3>
-                    <div class="chart-container">
-                        <canvas id="lineChart"></canvas>
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <h3 class="chart-title">Chart Two</h3>
-                    <div class="chart-container">
-                        <canvas id="donutChart"></canvas>
-                        <div class="donut-center">
-                            <div class="donut-value">3245</div>
-                            <div class="donut-label">Total</div>
+                <div class="charts-row">
+                    <div class="chart-card" style="grid-column: span 2;">
+                        <h3 class="chart-title">Threat Timeline</h3>
+                        <div class="chart-container">
+                            <canvas id="lineChart"></canvas>
                         </div>
                     </div>
-                    <div class="donut-legend">
-                        <div class="legend-item">
-                            <div class="legend-left">
-                                <div class="legend-color" style="background-color: #ec4899;"></div>
-                                <span class="legend-name">Critical</span>
-                            </div>
-                            <span class="legend-value">856</span>
+
+                    <div class="chart-card">
+                        <h3 class="chart-title">Alert Distribution</h3>
+                        <div class="chart-container">
+                            <canvas id="donutChart"></canvas>
                         </div>
-                        <div class="legend-item">
-                            <div class="legend-left">
-                                <div class="legend-color" style="background-color: #8b5cf6;"></div>
-                                <span class="legend-name">High</span>
-                            </div>
-                            <span class="legend-value">1245</span>
+                    </div>
+                </div>
+
+                <div class="charts-row">
+                    <div class="chart-card">
+                        <h3 class="chart-title">Weekly Threat Analysis</h3>
+                        <div class="chart-container">
+                            <canvas id="barChart"></canvas>
                         </div>
-                        <div class="legend-item">
-                            <div class="legend-left">
-                                <div class="legend-color" style="background-color: #06b6d4;"></div>
-                                <span class="legend-name">Medium</span>
+                    </div>
+
+                    <div class="chart-card">
+                        <h3 class="chart-title">Security Metrics</h3>
+                        <div class="horizontal-bars">
+                            <div class="bar-item">
+                                <div class="bar-header">
+                                    <span class="bar-label">Firewall Protection</span>
+                                    <span class="bar-value">95%</span>
+                                </div>
+                                <div class="bar-track">
+                                    <div class="bar-fill" style="width: 95%; background: #8b5cf6; box-shadow: 0 0 10px #8b5cf6;"></div>
+                                </div>
                             </div>
-                            <span class="legend-value">732</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-left">
-                                <div class="legend-color" style="background-color: #10b981;"></div>
-                                <span class="legend-name">Low</span>
+                            <div class="bar-item">
+                                <div class="bar-header">
+                                    <span class="bar-label">Antivirus Status</span>
+                                    <span class="bar-value">88%</span>
+                                </div>
+                                <div class="bar-track">
+                                    <div class="bar-fill" style="width: 88%; background: #ec4899; box-shadow: 0 0 10px #ec4899;"></div>
+                                </div>
                             </div>
-                            <span class="legend-value">412</span>
+                            <div class="bar-item">
+                                <div class="bar-header">
+                                    <span class="bar-label">Data Encryption</span>
+                                    <span class="bar-value">92%</span>
+                                </div>
+                                <div class="bar-track">
+                                    <div class="bar-fill" style="width: 92%; background: #06b6d4; box-shadow: 0 0 10px #06b6d4;"></div>
+                                </div>
+                            </div>
+                            <div class="bar-item">
+                                <div class="bar-header">
+                                    <span class="bar-label">Access Control</span>
+                                    <span class="bar-value">85%</span>
+                                </div>
+                                <div class="bar-track">
+                                    <div class="bar-fill" style="width: 85%; background: #10b981; box-shadow: 0 0 10px #10b981;"></div>
+                                </div>
+                            </div>
+                            <div class="bar-item">
+                                <div class="bar-header">
+                                    <span class="bar-label">Patch Management</span>
+                                    <span class="bar-value">78%</span>
+                                </div>
+                                <div class="bar-track">
+                                    <div class="bar-fill" style="width: 78%; background: #f59e0b; box-shadow: 0 0 10px #f59e0b;"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Charts Row 2 -->
-            <div class="charts-row">
-                <div class="chart-card">
-                    <h3 class="chart-title">Chart Three</h3>
-                    <div class="chart-container">
-                        <canvas id="barChart"></canvas>
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <h3 class="chart-title">List One</h3>
-                    <div class="alerts-list" id="alertsContainer"></div>
-
-                </div>
-                <div class="chart-card">
-                    <h3 class="chart-title">Chart Four</h3>
-                    <div class="horizontal-bars">
-                        <div class="bar-item">
-                            <div class="bar-header">
-                                <span class="bar-label">Firewall Protection</span>
-                                <span class="bar-value">95%</span>
-                            </div>
-                            <div class="bar-track">
-                                <div class="bar-fill" style="width: 95%; background-color: #8b5cf6;"></div>
-                            </div>
-                        </div>
-                        <div class="bar-item">
-                            <div class="bar-header">
-                                <span class="bar-label">Antivirus Status</span>
-                                <span class="bar-value">88%</span>
-                            </div>
-                            <div class="bar-track">
-                                <div class="bar-fill" style="width: 88%; background-color: #ec4899;"></div>
-                            </div>
-                        </div>
-                        <div class="bar-item">
-                            <div class="bar-header">
-                                <span class="bar-label">Data Encryption</span>
-                                <span class="bar-value">92%</span>
-                            </div>
-                            <div class="bar-track">
-                                <div class="bar-fill" style="width: 92%; background-color: #06b6d4;"></div>
-                            </div>
-                        </div>
-                        <div class="bar-item">
-                            <div class="bar-header">
-                                <span class="bar-label">Access Control</span>
-                                <span class="bar-value">85%</span>
-                            </div>
-                            <div class="bar-track">
-                                <div class="bar-fill" style="width: 85%; background-color: #10b981;"></div>
-                            </div>
-                        </div>
-                        <div class="bar-item">
-                            <div class="bar-header">
-                                <span class="bar-label">Patch Management</span>
-                                <span class="bar-value">78%</span>
-                            </div>
-                            <div class="bar-track">
-                                <div class="bar-fill" style="width: 78%; background-color: #f59e0b;"></div>
-                            </div>
-                        </div>
-                    </div>
+            <!-- System Section -->
+            <div id="system-section" class="page-section">
+                <div class="header">
+                    <h1>System Status</h1>
+                    <p>AI model and backend system status will appear here.</p>
                 </div>
             </div>
-            </div>
 
+            <!-- Settings Section -->
+            <div id="settings-section" class="page-section">
+                <div class="header">
+                    <h1>Settings</h1>
+                    <p>System configuration options will appear here.</p>
+                </div>
+            </div>
         </main>
     </div>
 
     <script>
+        /* ================= BACKEND INTEGRATION (YOUR ORIGINAL LOGIC) ================= */
 
-/* ================= BACKEND INTEGRATION ================= */
+        // Fetch alerts from backend
+        function loadAlerts() {
+            fetch("/alerts")
+                .then(res => res.json())
+                .then(data => {
+                    const alertsContainer = document.getElementById("alerts-container");
+                    const detectionStatus = document.getElementById("detectionStatus");
+                    const cameraID = document.getElementById("cameraID");
+                    const riskLevel = document.getElementById("riskLevel");
 
-// Fetch alerts from backend
-function loadAlerts() {
-    fetch("/alerts")
-        .then(res => res.json())
-        .then(data => {
+                    // Safety checks
+                    if (!alertsContainer || !detectionStatus || !cameraID || !riskLevel) {
+                        console.warn("Dashboard elements not ready yet");
+                        return;
+                    }
 
-            const alertsContainer = document.getElementById("alerts-container");
-            alertsContainer.innerHTML = "";
+                    alertsContainer.innerHTML = "";
 
-            const detectionStatus = document.getElementById("detectionStatus");
-            const cameraID = document.getElementById("cameraID");
-            const riskLevel = document.getElementById("riskLevel");
+                    if (!Array.isArray(data) || data.length === 0) {
+                        detectionStatus.innerText = "SAFE";
+                        detectionStatus.className = "stat-value status-safe";
+                        cameraID.innerText = "CAM_01";
+                        riskLevel.innerText = "LOW";
+                        riskLevel.className = "stat-value risk-low";
+                        return;
+                    }
 
-            if (data.length === 0) {
-                detectionStatus.innerText = "SAFE";
-                detectionStatus.style.color = "#10b981";
-                cameraID.innerText = "CAM_01";
-                riskLevel.innerText = "LOW";
-                riskLevel.style.color = "#3b82f6";
+                    const latest = data[data.length - 1];
+
+                    detectionStatus.innerText = "DETECTED";
+                    detectionStatus.className = "stat-value status-detected";
+                    cameraID.innerText = latest.camera_id;
+                    riskLevel.innerText = latest.risk;
+                    riskLevel.className = "stat-value risk-high";
+
+                    data.slice().reverse().forEach(alert => {
+                        alertsContainer.innerHTML += `
+                            <div class="alert-item">
+                                <div class="alert-left">
+                                    <div class="alert-icon-wrapper">⚠️</div>
+                                    <div class="alert-info">
+                                        <div class="alert-type">${alert.distress}</div>
+                                        <div class="alert-time">${alert.timestamp}s</div>
+                                    </div>
+                                </div>
+                                <span class="alert-severity severity-${alert.risk.toLowerCase()}">
+                                    ${alert.risk}
+                                </span>
+                            </div>
+                        `;
+                    });
+                })
+                .catch(err => {
+                    console.error("Failed to load alerts:", err);
+                });
+        }
+
+        // Upload video to backend
+        function uploadVideo(file) {
+            const formData = new FormData();
+            formData.append("video", file);
+
+            fetch("/upload", {
+                method: "POST",
+                body: formData
+            })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error("Upload failed");
+                }
+                return res.json();
+            })
+            .then(() => {
+                loadAlerts();
+                document.getElementById("status").innerText = "Analysis complete!";
+            })
+            .catch(err => {
+                console.error("Video upload error:", err);
+                document.getElementById("status").innerText = "Upload failed. Please try again.";
+            });
+        }
+
+        // Analyze button handler
+        function analyze() {
+            const fileInput = document.getElementById("videoInput");
+            const status = document.getElementById("status");
+
+            if (!fileInput || !fileInput.files.length) {
+                alert("Please select a video file first.");
                 return;
             }
 
-            const latest = data[data.length - 1];
+            status.innerText = "Uploading and analyzing...";
+            uploadVideo(fileInput.files[0]);
 
-            detectionStatus.innerText = "DETECTED";
-            detectionStatus.style.color = "#ef4444";
-            cameraID.innerText = latest.camera_id;
-            riskLevel.innerText = latest.risk;
-            riskLevel.style.color = "#ef4444";
+            // Switch to analytics tab
+            document.querySelector('[data-page="analytics"]').click();
+        }
 
-            data.reverse().forEach(alert => {
-                alertsContainer.innerHTML += `
-                    <div class="alert-item">
-                        <div class="alert-left">
-                            <span class="alert-icon">⚠️</span>
-                            <div class="alert-info">
-                                <div class="alert-type">${alert.distress}</div>
-                                <div class="alert-time">${alert.timestamp}s</div>
-                            </div>
-                        </div>
-                        <span class="alert-severity severity-${alert.risk.toLowerCase()}">
-                            ${alert.risk}
-                        </span>
-                    </div>
-                `;
+        // Auto-refresh alerts every 3 seconds
+        loadAlerts();
+        setInterval(loadAlerts, 3000);
+
+        /* ================= NAVIGATION ================= */
+
+        const navItems = document.querySelectorAll('.nav-item');
+        const sections = document.querySelectorAll('.page-section');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // Update active nav item
+                navItems.forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+
+                // Show corresponding section
+                const page = this.getAttribute('data-page');
+                sections.forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(page + '-section').classList.add('active');
             });
         });
-}
 
+        /* ================= CHART.JS SETUP ================= */
 
-// Upload video to backend
-function uploadVideo(file) {
-    const formData = new FormData();
-    formData.append("video", file);
-
-    fetch("/upload", {
-        method: "POST",
-        body: formData
-    })
-    .then(() => loadAlerts());
-}
-
-
-// Auto-refresh alerts every 3 seconds
-setInterval(loadAlerts, 3000);
-loadAlerts();
-
-        // Navigation functionality
-        const navItems = document.querySelectorAll('.nav-item');
-        navItems.forEach(item => {
-    item.addEventListener('click', function() {
-
-        navItems.forEach(nav => nav.classList.remove('active'));
-        this.classList.add('active');
-
-        const page = this.getAttribute('data-page');
-
-        // Hide all sections
-        document.getElementById('dashboard-section').style.display = 'none';
-        document.getElementById('cameras-section').style.display = 'none';
-        document.getElementById('alerts-section').style.display = 'none';
-        document.getElementById('analytics-section').style.display = 'none';
-        document.getElementById('system-section').style.display = 'none';
-        document.getElementById('settings-section').style.display = 'none';
-
-        // Show selected section
-        document.getElementById(page + '-section').style.display = 'block';
-    });
-});
-
-// ===== SilentSOS Detection Integration =====
-
-const detectionStatus = document.getElementById("detectionStatus");
-const cameraID = document.getElementById("cameraID");
-const riskLevel = document.getElementById("riskLevel");
-const alertsContainer = document.getElementById("alertsContainer");
-
-
-        // Chart.js configurations
         const chartOptions = {
             responsive: true,
             maintainAspectRatio: false,
@@ -718,11 +930,11 @@ const alertsContainer = document.getElementById("alertsContainer");
             },
             scales: {
                 y: {
-                    grid: { color: '#333' },
+                    grid: { color: '#1f1f1f' },
                     ticks: { color: '#666' }
                 },
                 x: {
-                    grid: { color: '#333' },
+                    grid: { color: '#1f1f1f' },
                     ticks: { color: '#666' }
                 }
             }
@@ -740,28 +952,32 @@ const alertsContainer = document.getElementById("alertsContainer");
                         data: [30, 45, 35, 50, 40, 55],
                         borderColor: '#8b5cf6',
                         backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                        tension: 0.4
+                        tension: 0.4,
+                        borderWidth: 3
                     },
                     {
                         label: 'Attacks',
                         data: [40, 35, 50, 45, 55, 50],
                         borderColor: '#ec4899',
                         backgroundColor: 'rgba(236, 72, 153, 0.1)',
-                        tension: 0.4
+                        tension: 0.4,
+                        borderWidth: 3
                     },
                     {
                         label: 'Scans',
                         data: [20, 30, 35, 40, 50, 45],
                         borderColor: '#06b6d4',
                         backgroundColor: 'rgba(6, 182, 212, 0.1)',
-                        tension: 0.4
+                        tension: 0.4,
+                        borderWidth: 3
                     },
                     {
                         label: 'Alerts',
                         data: [35, 40, 30, 45, 40, 50],
                         borderColor: '#f97316',
                         backgroundColor: 'rgba(249, 115, 22, 0.1)',
-                        tension: 0.4
+                        tension: 0.4,
+                        borderWidth: 3
                     }
                 ]
             },
@@ -785,7 +1001,15 @@ const alertsContainer = document.getElementById("alertsContainer");
                 maintainAspectRatio: false,
                 cutout: '70%',
                 plugins: {
-                    legend: { display: false }
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            color: '#9ca3af',
+                            font: { size: 12 },
+                            padding: 15
+                        }
+                    }
                 }
             }
         });
@@ -814,24 +1038,8 @@ const alertsContainer = document.getElementById("alertsContainer");
                     }
                 ]
             },
-            options: {
-                ...chartOptions,
-                scales: {
-                    ...chartOptions.scales,
-                    x: {
-                        ...chartOptions.scales.x,
-                        stacked: false
-                    },
-                    y: {
-                        ...chartOptions.scales.y,
-                        stacked: false
-                    }
-                }
-            }
+            options: chartOptions
         });
-        
-
     </script>
-    
 </body>
 </html>
