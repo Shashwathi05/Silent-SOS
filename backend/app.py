@@ -8,6 +8,14 @@ UPLOAD_FOLDER = "backend/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 alerts_log = []
+last_analysis = {
+    "distress": None,
+    "risk": "NONE",
+    "timestamp": None,
+    "camera_id": "CAM_01",
+    "confidence": 0.0
+}
+
 
 @app.route("/")
 def serve_dashboard():
@@ -16,9 +24,10 @@ def serve_dashboard():
 @app.route("/<path:path>")
 def serve_static(path):
     return send_from_directory(app.static_folder, path)
-
 @app.route("/upload", methods=["POST"])
 def upload():
+
+    global last_analysis
 
     if "video" not in request.files:
         return jsonify({"error": "No video uploaded"}), 400
@@ -29,6 +38,10 @@ def upload():
 
     result = process_video(file_path)
 
+    # Always update last analysis
+    last_analysis = result
+
+    # If distress detected → log it
     if result["distress"]:
         alert_entry = {
             "id": len(alerts_log) + 1,
@@ -41,9 +54,10 @@ def upload():
         }
 
         alerts_log.append(alert_entry)
-        return jsonify(alert_entry)
 
+    # Always return full result (not just alert_entry)
     return jsonify(result)
+
 
 @app.route("/acknowledge/<int:alert_id>", methods=["POST"])
 def acknowledge(alert_id):
@@ -57,3 +71,6 @@ def acknowledge(alert_id):
 
 if __name__ == "__main__":
     app.run(debug=True)
+@app.route("/latest", methods=["GET"])
+def get_latest():
+    return jsonify(last_analysis)

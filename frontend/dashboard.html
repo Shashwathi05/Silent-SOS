@@ -684,6 +684,36 @@
                     <h1>Analytics</h1>
                     <p>Detection trends and statistics</p>
                 </div>
+                
+                <!-- Detection Summary Box -->
+<div class="chart-card" id="analysisSummaryCard">
+    <h3 class="chart-title">Latest Video Analysis</h3>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+
+        <div class="stat-card">
+            <div class="stat-title">Distress Type</div>
+            <div class="stat-value" id="summaryDistress">--</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-title">Risk Level</div>
+            <div class="stat-value" id="summaryRisk">--</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-title">Timestamp (s)</div>
+            <div class="stat-value" id="summaryTimestamp">--</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-title">Confidence</div>
+            <div class="stat-value" id="summaryConfidence">--</div>
+        </div>
+
+    </div>
+</div>
+
 
                 <div class="stat-card" style="margin-bottom: 2rem;">
                     <div class="stat-icon" style="background: linear-gradient(135deg, #f97316, #ef4444);">
@@ -819,6 +849,34 @@
                     }
 
                     const latest = data[data.length - 1];
+                    // Update Analytics Summary Box
+const summaryDistress = document.getElementById("summaryDistress");
+const summaryRisk = document.getElementById("summaryRisk");
+const summaryTimestamp = document.getElementById("summaryTimestamp");
+const summaryConfidence = document.getElementById("summaryConfidence");
+
+if (summaryDistress && summaryRisk && summaryTimestamp && summaryConfidence) {
+    summaryDistress.innerText = latest.distress || "None";
+    summaryTimestamp.innerText = latest.timestamp ?? "--";
+    summaryConfidence.innerText = latest.confidence 
+        ? (latest.confidence * 100).toFixed(0) + "%" 
+        : "--";
+
+    summaryRisk.innerText = latest.risk;
+
+    // Risk coloring
+    summaryRisk.className = "stat-value";
+    if (latest.risk === "CRITICAL") {
+        summaryRisk.style.color = "#ec4899";
+    } else if (latest.risk === "HIGH") {
+        summaryRisk.style.color = "#ef4444";
+    } else if (latest.risk === "MEDIUM") {
+        summaryRisk.style.color = "#eab308";
+    } else {
+        summaryRisk.style.color = "#10b981";
+    }
+}
+
 
                     detectionStatus.innerText = "DETECTED";
                     detectionStatus.className = "stat-value status-detected";
@@ -847,6 +905,36 @@
                     console.error("Failed to load alerts:", err);
                 });
         }
+        // Load latest analysis result for Analytics box
+function loadLatestAnalysis() {
+    fetch("/latest")
+        .then(res => res.json())
+        .then(latest => {
+
+            const summaryDistress = document.getElementById("summaryDistress");
+            const summaryRisk = document.getElementById("summaryRisk");
+            const summaryTimestamp = document.getElementById("summaryTimestamp");
+            const summaryConfidence = document.getElementById("summaryConfidence");
+
+            if (!latest || !summaryDistress) return;
+
+            summaryDistress.innerText = latest.distress ? latest.distress : "SAFE";
+            summaryRisk.innerText = latest.risk;
+            summaryTimestamp.innerText = latest.timestamp ?? "0";
+            summaryConfidence.innerText = (latest.confidence * 100).toFixed(0) + "%";
+
+            if (latest.risk === "CRITICAL") {
+                summaryRisk.style.color = "#ec4899";
+            } else if (latest.risk === "HIGH") {
+                summaryRisk.style.color = "#ef4444";
+            } else if (latest.risk === "MEDIUM") {
+                summaryRisk.style.color = "#eab308";
+            } else {
+                summaryRisk.style.color = "#10b981";
+            }
+        });
+}
+
 
         // Upload video to backend
         function uploadVideo(file) {
@@ -885,6 +973,7 @@
 
             status.innerText = "Uploading and analyzing...";
             uploadVideo(fileInput.files[0]);
+            setTimeout(loadLatestAnalysis, 1500);
 
             // Switch to analytics tab
             document.querySelector('[data-page="analytics"]').click();
