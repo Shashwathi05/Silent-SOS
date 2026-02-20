@@ -9,14 +9,11 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 alerts_log = []
 last_analysis = {
-    "distress": None,
-    "risk": "NONE",
-    "timestamp": None,
-    "camera_id": "CAM_01",
-    "confidence": 0.0
+    "status": "idle",
+    "result": None
 }
 
-
+# Serve dashboard
 @app.route("/")
 def serve_dashboard():
     return send_from_directory(app.static_folder, "dashboard.html")
@@ -24,6 +21,8 @@ def serve_dashboard():
 @app.route("/<path:path>")
 def serve_static(path):
     return send_from_directory(app.static_folder, path)
+
+# Upload + Analyze
 @app.route("/upload", methods=["POST"])
 def upload():
 
@@ -36,12 +35,13 @@ def upload():
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(file_path)
 
+    last_analysis["status"] = "processing"
+
     result = process_video(file_path)
 
-    # Always update last analysis
-    last_analysis = result
+    last_analysis["status"] = "done"
+    last_analysis["result"] = result
 
-    # If distress detected → log it
     if result["distress"]:
         alert_entry = {
             "id": len(alerts_log) + 1,
@@ -54,11 +54,21 @@ def upload():
         }
 
         alerts_log.append(alert_entry)
+        return jsonify(alert_entry)
 
-    # Always return full result (not just alert_entry)
     return jsonify(result)
 
+# Return all alerts
+@app.route("/alerts", methods=["GET"])
+def get_alerts():
+    return jsonify(alerts_log)
 
+# Return latest analysis status
+@app.route("/latest", methods=["GET"])
+def get_latest():
+    return jsonify(last_analysis)
+
+# Acknowledge alert
 @app.route("/acknowledge/<int:alert_id>", methods=["POST"])
 def acknowledge(alert_id):
     for alert in alerts_log:
@@ -71,6 +81,3 @@ def acknowledge(alert_id):
 
 if __name__ == "__main__":
     app.run(debug=True)
-@app.route("/latest", methods=["GET"])
-def get_latest():
-    return jsonify(last_analysis)

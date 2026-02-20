@@ -909,19 +909,25 @@ if (summaryDistress && summaryRisk && summaryTimestamp && summaryConfidence) {
 function loadLatestAnalysis() {
     fetch("/latest")
         .then(res => res.json())
-        .then(latest => {
+        .then(data => {
+
+            if (!data || !data.result) return;
+
+            const latest = data.result;
 
             const summaryDistress = document.getElementById("summaryDistress");
             const summaryRisk = document.getElementById("summaryRisk");
             const summaryTimestamp = document.getElementById("summaryTimestamp");
             const summaryConfidence = document.getElementById("summaryConfidence");
 
-            if (!latest || !summaryDistress) return;
+            summaryDistress.innerText = latest.distress || "SAFE";
+            summaryRisk.innerText = latest.risk || "NONE";
+            summaryTimestamp.innerText = latest.timestamp ?? "--";
+            summaryConfidence.innerText = latest.confidence
+                ? (latest.confidence * 100).toFixed(0) + "%"
+                : "--";
 
-            summaryDistress.innerText = latest.distress ? latest.distress : "SAFE";
-            summaryRisk.innerText = latest.risk;
-            summaryTimestamp.innerText = latest.timestamp ?? "0";
-            summaryConfidence.innerText = (latest.confidence * 100).toFixed(0) + "%";
+            summaryRisk.className = "stat-value";
 
             if (latest.risk === "CRITICAL") {
                 summaryRisk.style.color = "#ec4899";
@@ -932,9 +938,9 @@ function loadLatestAnalysis() {
             } else {
                 summaryRisk.style.color = "#10b981";
             }
-        });
+        })
+        .catch(err => console.error("Latest fetch error:", err));
 }
-
 
         // Upload video to backend
         function uploadVideo(file) {
@@ -952,9 +958,10 @@ function loadLatestAnalysis() {
                 return res.json();
             })
             .then(() => {
-                loadAlerts();
-                document.getElementById("status").innerText = "Analysis complete!";
-            })
+    loadAlerts();
+    loadLatestAnalysis();
+    document.getElementById("status").innerText = "Analysis complete!";
+})
             .catch(err => {
                 console.error("Video upload error:", err);
                 document.getElementById("status").innerText = "Upload failed. Please try again.";
