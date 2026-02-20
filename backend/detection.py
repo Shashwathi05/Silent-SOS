@@ -1,12 +1,15 @@
 import cv2
 import mediapipe as mp
-import math
 
 
-def calculate_angle(p1, p2):
-    dx = p2[0] - p1[0]
-    dy = p2[1] - p1[1]
-    return abs(math.degrees(math.atan2(dx, dy)))
+def default_response():
+    return {
+        "distress": None,
+        "risk": "NONE",
+        "timestamp": None,
+        "camera_id": "CAM_01",
+        "confidence": 0.0
+    }
 
 
 def process_video(video_path):
@@ -17,13 +20,7 @@ def process_video(video_path):
     cap = cv2.VideoCapture(video_path)
 
     if not cap.isOpened():
-        return {
-            "distress": None,
-            "risk": "NONE",
-            "timestamp": None,
-            "camera_id": "CAM_01",
-            "confidence": 0.0
-        }
+        return default_response()
 
     fps = cap.get(cv2.CAP_PROP_FPS) or 30
 
@@ -31,13 +28,18 @@ def process_video(video_path):
     prev_center_y = None
     prev_height = None
 
-    state = "UPRIGHT"
+    fall_detected = False
+    recovery_detected = False
     collapse_timestamp = None
-    inactivity_frames = 0
 
-    velocity_threshold = 80
-    height_drop_threshold = 0.35
-    inactivity_threshold_frames = int(fps * 4)
+    inactivity_frames = 0
+    max_inactivity_frames = 0
+
+    max_velocity = 0
+    max_height_drop = 1
+
+    velocity_threshold = 55
+    height_drop_threshold = 0.75
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -55,91 +57,88 @@ def process_video(video_path):
         landmarks = results.pose_landmarks.landmark
         h, w, _ = frame.shape
 
-        # Get key landmarks
-        left_shoulder = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER]
-        right_shoulder = landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER]
-        left_hip = landmarks[mp_pose.PoseLandmark.LEFT_HIP]
-        right_hip = landmarks[mp_pose.PoseLandmark.RIGHT_HIP]
-
-        # Convert to pixel space
-        points = [
-            (int(left_shoulder.x * w), int(left_shoulder.y * h)),
-            (int(right_shoulder.x * w), int(right_shoulder.y * h)),
-            (int(left_hip.x * w), int(left_hip.y * h)),
-            (int(right_hip.x * w), int(right_hip.y * h))
+        indices = [
+            mp_pose.PoseLandmark.LEFT_SHOULDER,
+            mp_pose.PoseLandmark.RIGHT_SHOULDER,
+            mp_pose.PoseLandmark.LEFT_HIP,
+            mp_pose.PoseLandmark.RIGHT_HIP
         ]
 
-        ys = [p[1] for p in points]
+        ys = [int(landmarks[i].y * h) for i in indices]
 
         center_y = sum(ys) / len(ys)
         body_height = max(ys) - min(ys)
 
-        # Velocity of center drop
         vertical_velocity = 0
         if prev_center_y is not None:
             vertical_velocity = (center_y - prev_center_y) * fps
 
         prev_center_y = center_y
 
-        # Height change ratio
         height_ratio = 1
-        if prev_height is not None and prev_height != 0:
+        if prev_height and prev_height != 0:
             height_ratio = body_height / prev_height
 
         prev_height = body_height
 
-        # ---------------- STATE MACHINE ---------------- #
+        max_velocity = max(max_velocity, vertical_velocity)
+        max_height_drop = min(max_height_drop, height_ratio)
 
-        if state == "UPRIGHT":
-            if vertical_velocity > velocity_threshold:
-                state = "FALLING"
-
-        elif state == "FALLING":
-            # If body height collapses significantly
-            if height_ratio < height_drop_threshold:
-                state = "HORIZONTAL"
+        # ---------------- FALL DETECTION ---------------- #
+        if not fall_detected:
+            if vertical_velocity > velocity_threshold and height_ratio < height_drop_threshold:
+                fall_detected = True
                 collapse_timestamp = frame_number / fps
                 inactivity_frames = 0
 
-        elif state == "HORIZONTAL":
+        else:
+            # Recovery detection
+            if height_ratio > 1.15 and vertical_velocity < -20:
+                recovery_detected = True
 
-            if abs(vertical_velocity) < 10:
+            # Inactivity tracking
+            if abs(vertical_velocity) < 4:
                 inactivity_frames += 1
+                max_inactivity_frames = max(max_inactivity_frames, inactivity_frames)
             else:
                 inactivity_frames = 0
 
-            if inactivity_frames > inactivity_threshold_frames:
-                state = "INACTIVE"
-                break
-
     cap.release()
 
-    if state == "INACTIVE":
+    if not fall_detected:
+        return default_response()
 
-        inactivity_seconds = inactivity_frames / fps
+    inactivity_seconds = max_inactivity_frames / fps
 
-        if inactivity_seconds > 8:
+    # ---------------- FINAL DECISION AFTER FULL VIDEO ---------------- #
+
+    if recovery_detected:
+        risk = "MEDIUM"
+    else:
+        if inactivity_seconds >= 15:
             risk = "CRITICAL"
-            confidence = 0.95
-        elif inactivity_seconds > 4:
+        elif inactivity_seconds >= 8:
             risk = "HIGH"
-            confidence = 0.9
         else:
-            risk = "MEDIUM"
-            confidence = 0.8
+            risk = "HIGH"  # If video ends with person down
 
-        return {
-            "distress": "collapse",
-            "risk": risk,
-            "timestamp": round(collapse_timestamp, 2),
-            "camera_id": "CAM_01",
-            "confidence": confidence
-        }
+    # Dynamic confidence
+    velocity_score = min(max_velocity / 300, 1)
+    height_score = min((1 - max_height_drop) / 0.5, 1)
+    inactivity_score = min(inactivity_seconds / 15, 1)
+
+    confidence = round(
+        0.4 * velocity_score +
+        0.3 * height_score +
+        0.3 * inactivity_score, 2
+    )
+
+    confidence = max(confidence, 0.7)
 
     return {
-        "distress": None,
-        "risk": "NONE",
-        "timestamp": None,
+        "distress": "collapse",
+        "risk": risk,
+        "timestamp": round(collapse_timestamp, 2),
         "camera_id": "CAM_01",
-        "confidence": 0.0
+        "confidence": confidence
     }

@@ -13,7 +13,6 @@ last_analysis = {
     "result": None
 }
 
-# Serve dashboard
 @app.route("/")
 def serve_dashboard():
     return send_from_directory(app.static_folder, "dashboard.html")
@@ -22,7 +21,7 @@ def serve_dashboard():
 def serve_static(path):
     return send_from_directory(app.static_folder, path)
 
-# Upload + Analyze
+
 @app.route("/upload", methods=["POST"])
 def upload():
 
@@ -42,7 +41,8 @@ def upload():
     last_analysis["status"] = "done"
     last_analysis["result"] = result
 
-    if result["distress"]:
+    # Only alert for HIGH or CRITICAL
+    if result["risk"] in ["HIGH", "CRITICAL"]:
         alert_entry = {
             "id": len(alerts_log) + 1,
             "distress": result["distress"],
@@ -58,25 +58,15 @@ def upload():
 
     return jsonify(result)
 
-# Return all alerts
+
 @app.route("/alerts", methods=["GET"])
 def get_alerts():
     return jsonify(alerts_log)
 
-# Return latest analysis status
+
 @app.route("/latest", methods=["GET"])
 def get_latest():
     return jsonify(last_analysis)
-
-# Acknowledge alert
-@app.route("/acknowledge/<int:alert_id>", methods=["POST"])
-def acknowledge(alert_id):
-    for alert in alerts_log:
-        if alert["id"] == alert_id:
-            alert["status"] = "ACKNOWLEDGED"
-            return jsonify(alert)
-
-    return jsonify({"error": "Alert not found"}), 404
 
 
 if __name__ == "__main__":
