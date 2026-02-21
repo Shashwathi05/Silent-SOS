@@ -13,9 +13,9 @@
         }
         /* Standard Incident Video Size */
 .incident-video {
-    width: 480px;
-    height: 270px;
-    object-fit: cover;
+    width: 480px;        /* fixed width */
+    height: auto;        /* auto height to preserve aspect ratio */
+    max-width: 100%;     /* responsive on small screens */
     border-radius: 16px;
     margin-top: 1rem;
     display: none;
