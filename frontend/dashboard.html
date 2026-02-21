@@ -11,7 +11,16 @@
             padding: 0;
             box-sizing: border-box;
         }
-
+        /* Standard Incident Video Size */
+.incident-video {
+    width: 480px;
+    height: 270px;
+    object-fit: cover;
+    border-radius: 16px;
+    margin-top: 1rem;
+    display: none;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background-color: #000000;
@@ -736,10 +745,12 @@
     <div class="chart-card">
     <h3 class="chart-title">Detected Incident Clip</h3>
 
+    <div style="display:flex; justify-content:center;">
     <video id="incidentVideo"
-        controls
-        style="width:100%; border-radius:16px; margin-top:1rem; display:none;">
+        class="incident-video"
+        controls>
     </video>
+</div>
 
     <p id="clipMessage"
        style="margin-top:1rem; color:#9ca3af;">
@@ -774,14 +785,7 @@
 </div>
 
 
-                <div class="stat-card" style="margin-bottom: 2rem;">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #f97316, #ef4444);">
-                        📹
-                    </div>
-                    <div class="stat-value" id="cameraID">--</div>
-                    <div class="stat-title">Camera ID</div>
-                </div>
-
+               
                 <div class="charts-row">
                     <div class="chart-card" style="grid-column: span 2;">
                         <h3 class="chart-title">Threat Timeline</h3>
@@ -1059,20 +1063,31 @@ function loadLatestAnalysis() {
     const overlay = document.getElementById("loadingOverlay");
 
     if (!fileInput || !fileInput.files.length) {
-        alert("Please select a video file first.");
+        status.innerText = "⚠️ Please select a video file first.";
+        status.style.color = "#ef4444";
         return;
     }
+    // Reset previous incident clip
+const videoElement = document.getElementById("incidentVideo");
+const message = document.getElementById("clipMessage");
+
+if (videoElement) {
+    videoElement.pause();
+    videoElement.removeAttribute("src");
+    videoElement.load();
+    videoElement.style.display = "none";
+}
+
+if (message) {
+    message.style.display = "block";
+}
 
     overlay.style.display = "flex";  // Show loading overlay
     status.innerText = "Uploading and analyzing...";
 
     uploadVideo(fileInput.files[0]);
 
-    setTimeout(() => {
-        loadLatestAnalysis();
-        overlay.style.display = "none"; // Hide overlay
-    }, 3000); // adjust if needed
-
+    
     // Switch to analytics tab
     document.querySelector('[data-page="analytics"]').click();
 }
