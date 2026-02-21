@@ -883,7 +883,17 @@
 
     <script>
         /* ================= BACKEND INTEGRATION (YOUR ORIGINAL LOGIC) ================= */
+        const analysisSteps = [
+    "Uploading footage...",
+    "Processing video frames...",
+    "Running AI detection model...",
+    "Analyzing distress patterns...",
+    "Evaluating risk level...",
+    "Generating final report..."
+];
 
+let analysisInterval = null;
+let currentStep = 0;
         // Fetch alerts from backend
         function loadAlerts() {
             fetch("/alerts")
@@ -1029,6 +1039,14 @@ function loadLatestAnalysis() {
     }
 }
     document.getElementById("loadingOverlay").style.display = "none";
+
+clearInterval(analysisInterval);
+analysisInterval = null;
+
+const status = document.getElementById("status");
+status.innerText = "✅ Analysis complete!";
+status.style.color = "#10b981";
+    
 })
             .catch(err => {
                 console.error("Video upload error:", err);
