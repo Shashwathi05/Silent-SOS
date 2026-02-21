@@ -202,7 +202,10 @@
             background-clip: text;
             animation: gradient-flow 3s ease infinite;
         }
-
+        @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
         @keyframes gradient-flow {
             0%, 100% { background-position: 0% center; }
             50% { background-position: 100% center; }
@@ -590,6 +593,49 @@
     </div>
 
     <div class="dashboard">
+        <!-- Loading Overlay -->
+<div id="loadingOverlay" style="
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    flex-direction: column;
+    text-align: center;
+">
+    <div style="
+        width: 60px;
+        height: 60px;
+        border: 5px solid rgba(147, 51, 234, 0.3);
+        border-top: 5px solid #9333ea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1.5rem;
+    "></div>
+
+    <h2 style="
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #a78bfa, #ec4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    ">
+        Analyzing Video Footage
+    </h2>
+
+    <p style="
+        margin-top: 0.75rem;
+        color: #9ca3af;
+        max-width: 400px;
+        font-size: 0.95rem;
+    ">
+        Please wait while our AI processes the uploaded footage.
+        This may take a few moments depending on video length.
+    </p>
+</div>
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">
@@ -687,6 +733,19 @@
                 
                 <!-- Detection Summary Box -->
 <div class="chart-card" id="analysisSummaryCard">
+    <div class="chart-card">
+    <h3 class="chart-title">Detected Incident Clip</h3>
+
+    <video id="incidentVideo"
+        controls
+        style="width:100%; border-radius:16px; margin-top:1rem; display:none;">
+    </video>
+
+    <p id="clipMessage"
+       style="margin-top:1rem; color:#9ca3af;">
+       No incident clip available yet.
+    </p>
+</div>
     <h3 class="chart-title">Latest Video Analysis</h3>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
@@ -948,34 +1007,75 @@ function loadLatestAnalysis() {
                 }
                 return res.json();
             })
-            .then(() => {
+            .then((result) => {
+
     loadAlerts();
     loadLatestAnalysis();
+
     document.getElementById("status").innerText = "Analysis complete!";
+
+    if (result && result.timestamp != null) {
+        showIncidentClip(file, result.timestamp);
+    }
+    document.getElementById("loadingOverlay").style.display = "none";
 })
             .catch(err => {
                 console.error("Video upload error:", err);
                 document.getElementById("status").innerText = "Upload failed. Please try again.";
             });
         }
+        function showIncidentClip(file, timestamp) {
+
+    const videoElement = document.getElementById("incidentVideo");
+    const message = document.getElementById("clipMessage");
+
+    const videoURL = URL.createObjectURL(file);
+
+    videoElement.src = videoURL;
+    videoElement.style.display = "block";
+    message.style.display = "none";
+
+    videoElement.onloadedmetadata = function () {
+
+        const startTime = Math.max(0, timestamp - 3);
+        const endTime = timestamp + 3;
+
+        videoElement.currentTime = startTime;
+        videoElement.play();
+
+        videoElement.ontimeupdate = function () {
+            if (videoElement.currentTime >= endTime) {
+                videoElement.pause();
+                videoElement.ontimeupdate = null;
+            }
+        };
+    };
+}
 
         // Analyze button handler
         function analyze() {
-            const fileInput = document.getElementById("videoInput");
-            const status = document.getElementById("status");
+    const fileInput = document.getElementById("videoInput");
+    const status = document.getElementById("status");
+    const overlay = document.getElementById("loadingOverlay");
 
-            if (!fileInput || !fileInput.files.length) {
-                alert("Please select a video file first.");
-                return;
-            }
+    if (!fileInput || !fileInput.files.length) {
+        alert("Please select a video file first.");
+        return;
+    }
 
-            status.innerText = "Uploading and analyzing...";
-            uploadVideo(fileInput.files[0]);
-            setTimeout(loadLatestAnalysis, 1500);
+    overlay.style.display = "flex";  // Show loading overlay
+    status.innerText = "Uploading and analyzing...";
 
-            // Switch to analytics tab
-            document.querySelector('[data-page="analytics"]').click();
-        }
+    uploadVideo(fileInput.files[0]);
+
+    setTimeout(() => {
+        loadLatestAnalysis();
+        overlay.style.display = "none"; // Hide overlay
+    }, 3000); // adjust if needed
+
+    // Switch to analytics tab
+    document.querySelector('[data-page="analytics"]').click();
+}
 
         // Auto-refresh alerts every 3 seconds
         loadAlerts();
