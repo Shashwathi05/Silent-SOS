@@ -635,15 +635,14 @@
         Analyzing Video Footage
     </h2>
 
-    <p style="
+    <p id="overlayStatus"
+   style="
         margin-top: 0.75rem;
         color: #9ca3af;
         max-width: 400px;
         font-size: 0.95rem;
-    ">
-        Please wait while our AI processes the uploaded footage.
-        This may take a few moments depending on video length.
-    </p>
+   ">
+</p>
 </div>
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -1109,39 +1108,47 @@ status.style.color = "#10b981";
     };
 }
 
-        // Analyze button handler
-        function analyze() {
+    // Analyze button handler
+function analyze() {
+
     const fileInput = document.getElementById("videoInput");
-    const status = document.getElementById("status");
     const overlay = document.getElementById("loadingOverlay");
 
     if (!fileInput || !fileInput.files.length) {
+        const status = document.getElementById("status");
         status.innerText = "⚠️ Please select a video file first.";
         status.style.color = "#ef4444";
         return;
     }
+
     // Reset previous incident clip
-const videoElement = document.getElementById("incidentVideo");
-const message = document.getElementById("clipMessage");
+    const videoElement = document.getElementById("incidentVideo");
+    const message = document.getElementById("clipMessage");
 
-if (videoElement) {
-    videoElement.pause();
-    videoElement.removeAttribute("src");
-    videoElement.load();
-    videoElement.style.display = "none";
-}
+    if (videoElement) {
+        videoElement.pause();
+        videoElement.removeAttribute("src");
+        videoElement.load();
+        videoElement.style.display = "none";
+    }
 
-if (message) {
-    message.style.display = "block";
-}
+    if (message) {
+        message.style.display = "block";
+    }
 
-    overlay.style.display = "flex";  // Show loading overlay
-    status.innerText = "Uploading and analyzing...";
+    overlay.style.display = "flex";
+
+    // Start rotating messages
+    currentStep = 0;
+    document.getElementById("overlayStatus").innerText = analysisSteps[currentStep];
+
+    analysisInterval = setInterval(() => {
+        currentStep = (currentStep + 1) % analysisSteps.length;
+        document.getElementById("overlayStatus").innerText = analysisSteps[currentStep];
+    }, 1500);
 
     uploadVideo(fileInput.files[0]);
 
-    
-    // Switch to analytics tab
     document.querySelector('[data-page="analytics"]').click();
 }
 
