@@ -1018,9 +1018,16 @@ function loadLatestAnalysis() {
 
     document.getElementById("status").innerText = "Analysis complete!";
 
-    if (result && result.timestamp != null) {
+    if (result) {
+
+    if (result.timestamp != null) {
+        // Show only detected incident part
         showIncidentClip(file, result.timestamp);
+    } else {
+        // SAFE video → show full video
+        showFullVideo(file);
     }
+}
     document.getElementById("loadingOverlay").style.display = "none";
 })
             .catch(err => {
@@ -1039,10 +1046,13 @@ function loadLatestAnalysis() {
     videoElement.style.display = "block";
     message.style.display = "none";
 
+    // REMOVE controls for incident clip
+    videoElement.removeAttribute("controls");
+
     videoElement.onloadedmetadata = function () {
 
-        const startTime = Math.max(0, timestamp - 3);
-        const endTime = timestamp + 3;
+        const startTime = Math.max(0, timestamp - 2);
+        const endTime = timestamp + 2;
 
         videoElement.currentTime = startTime;
         videoElement.play();
@@ -1050,9 +1060,34 @@ function loadLatestAnalysis() {
         videoElement.ontimeupdate = function () {
             if (videoElement.currentTime >= endTime) {
                 videoElement.pause();
-                videoElement.ontimeupdate = null;
+                videoElement.currentTime = startTime; // reset back to clip start
             }
         };
+
+        // Prevent manual seeking
+        videoElement.onseeking = function () {
+            if (videoElement.currentTime < startTime || videoElement.currentTime > endTime) {
+                videoElement.currentTime = startTime;
+            }
+        };
+    };
+}
+    function showFullVideo(file) {
+
+    const videoElement = document.getElementById("incidentVideo");
+    const message = document.getElementById("clipMessage");
+
+    const videoURL = URL.createObjectURL(file);
+
+    videoElement.src = videoURL;
+    videoElement.style.display = "block";
+    message.style.display = "none";
+
+    // Enable controls for SAFE video
+    videoElement.setAttribute("controls", true);
+
+    videoElement.onloadedmetadata = function () {
+        videoElement.currentTime = 0;
     };
 }
 
