@@ -41,6 +41,9 @@ def process_video(video_path):
     velocity_threshold = 55
     height_drop_threshold = 0.75
 
+    # 🔥 ADDED: sustained recovery counter
+    recovery_frames = 0
+
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
@@ -92,11 +95,15 @@ def process_video(video_path):
                 inactivity_frames = 0
 
         else:
-            # Recovery detection
-            if height_ratio > 1.15 and vertical_velocity < -20:
-                recovery_detected = True
+            # 🔥 FIXED RECOVERY DETECTION (sustained, not single frame spike)
+            if height_ratio > 1.15:
+                recovery_frames += 1
+            else:
+                recovery_frames = 0
 
-            # Inactivity tracking
+            if recovery_frames > int(fps * 1):  # 1 second upright required
+                recovery_detected = True
+            # Inactivity tracking (UNCHANGED)
             if abs(vertical_velocity) < 4:
                 inactivity_frames += 1
                 max_inactivity_frames = max(max_inactivity_frames, inactivity_frames)
@@ -104,6 +111,7 @@ def process_video(video_path):
                 inactivity_frames = 0
 
     cap.release()
+    pose.close()
 
     if not fall_detected:
         return default_response()
@@ -120,9 +128,9 @@ def process_video(video_path):
         elif inactivity_seconds >= 8:
             risk = "HIGH"
         else:
-            risk = "HIGH"  # If video ends with person down
+            risk = "HIGH"
 
-    # Dynamic confidence
+    # Dynamic confidence (UNCHANGED)
     velocity_score = min(max_velocity / 300, 1)
     height_score = min((1 - max_height_drop) / 0.5, 1)
     inactivity_score = min(inactivity_seconds / 15, 1)
